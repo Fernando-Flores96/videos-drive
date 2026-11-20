@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reproductor de videos</title>
+    <title>Biblioteca de Videos - Estilo YouTube</title>
 
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -13,154 +13,578 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
 
     <style>
+        :root {
+            --bg-color: #f3f4f8;
+            --card-radius: 16px;
+            --primary-accent: #2563eb;
+        }
+
         body {
-            background: #f5f6fa;
-            font-family: system-ui, sans-serif;
+            background-color: var(--bg-color);
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            color: #1f2937;
         }
 
         .video-card {
             border: none;
-            border-radius: 16px;
+            border-radius: var(--card-radius);
             overflow: hidden;
-            box-shadow: 0 5px 20px rgba(0,0,0,.06);
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+            background: #ffffff;
         }
 
-        .video-container {
+        /* Reproductor único: 16:9 estricto */
+        .player-wrapper {
             position: relative;
             width: 100%;
             aspect-ratio: 16 / 9;
-            background: #111827;
+            background: #000000;
+            border-top-left-radius: var(--card-radius);
+            border-top-right-radius: var(--card-radius);
+            overflow: hidden;
         }
 
-        .video-container iframe {
+        .player-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             border: 0;
         }
 
-        .video-info {
-            padding: 20px;
+        /* Playlist estilo YouTube */
+        .playlist-card {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            border: none;
+            border-radius: var(--card-radius);
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+            background: #ffffff;
         }
 
-        .video-badge {
-            background: #e8f0fe;
-            color: #2455a4;
-            font-size: 12px;
-            padding: 6px 12px;
-            border-radius: 20px;
+        .playlist-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f1f3f5;
         }
 
-        .video-title {
+        /* Altura fija con scroll interno para no alargar la página */
+        .playlist-items {
+            max-height: 520px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        /* Barra de scroll estilizada */
+        .playlist-items::-webkit-scrollbar {
+            width: 6px;
+        }
+        .playlist-items::-webkit-scrollbar-track {
+            background: #f8fafc;
+        }
+        .playlist-items::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .playlist-items::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Cada ítem de la lista */
+        .playlist-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #f8fafc;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: inherit;
+            align-items: center;
+        }
+
+        .playlist-item:hover {
+            background-color: #f8faff;
+        }
+
+        .playlist-item.active {
+            background-color: #edf5ff;
+            border-left: 4px solid var(--primary-accent);
+        }
+
+        .playlist-item.active .item-title {
+            color: var(--primary-accent);
             font-weight: 700;
-            color: #1f2937;
         }
 
-        .video-description {
-            color: #6b7280;
+        /* Miniatura simulada estilo YouTube */
+        .item-thumb {
+            width: 90px;
+            min-width: 90px;
+            height: 54px;
+            border-radius: 8px;
+            background: #1e293b;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
             font-size: 14px;
+        }
+
+        .item-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .item-thumb .badge-duration {
+            position: absolute;
+            bottom: 3px;
+            right: 4px;
+            background: rgba(0, 0, 0, 0.75);
+            font-size: 10px;
+            padding: 1px 4px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .item-thumb .play-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(37, 99, 235, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .playlist-item:hover .item-thumb .play-overlay,
+        .playlist-item.active .item-thumb .play-overlay {
+            opacity: 1;
+        }
+
+        .item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .item-title {
+            font-size: 13.5px;
+            font-weight: 600;
+            line-height: 1.35;
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .item-meta {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .badge-now-playing {
+            font-size: 10.5px;
+            font-weight: 600;
+            background: #dbeafe;
+            color: #1d4ed8;
+            padding: 2px 7px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .search-box {
+            position: relative;
+        }
+        .search-box i {
+            position: absolute;
+            top: 50%;
+            left: 12px;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+        .search-box input {
+            padding-left: 36px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            font-size: 13px;
         }
     </style>
 </head>
 
 <body>
 
-<div class="container py-5">
+<div class="container py-4">
 
-    <!-- Encabezado -->
-    <div class="mb-4">
-        <span class="text-primary fw-semibold small">
-            <i class="bi bi-play-circle me-1"></i> MULTIMEDIA
-        </span>
+    <!-- Encabezado superior -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+        <div>
+            <span class="badge text-bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-semibold mb-2">
+                <i class="bi bi-collection-play me-1"></i> BIBLIOTECA MULTIMEDIA
+            </span>
+            <h2 class="fw-bold mb-1 text-dark">Eres mi Estrella</h2>
+            <p class="text-secondary small mb-0">Selecciona cualquier video para reproducirlo al instante sin recargar la página.</p>
+        </div>
 
-        <h2 class="fw-bold mt-2">Biblioteca de videos</h2>
-
-        <p class="text-secondary">
-            Consulta y visualiza nuestros contenidos audiovisuales.
-        </p>
+        <div class="text-muted small mt-2 mt-sm-0">
+            <span class="badge bg-light text-dark border">
+                <i class="bi bi-hdd-network me-1 text-success"></i> Optimizado: 1 reproductor en memoria
+            </span>
+        </div>
     </div>
 
+    <!-- Layout estilo YouTube: Reproductor grande (izq) + Selector lateral (der) -->
     <div class="row g-4">
 
-        <!-- Reproductor principal -->
+        <!-- 1. Columna del Reproductor Principal (8 cols) -->
         <div class="col-lg-8">
-
             <div class="card video-card">
-
-                <div class="video-container">
+                
+                <!-- Único Iframe en memoria -->
+                <div class="player-wrapper">
                     <iframe
-                        src="https://drive.google.com/file/d/190TD9856u3wMTdc-qpHV9s3LqbbfE6jl/preview"
-                        allow="autoplay"
+                        id="mainPlayer"
+                        src=""
+                        allow="autoplay; fullscreen"
                         allowfullscreen>
                     </iframe>
                 </div>
 
-                <div class="video-info">
+                <!-- Detalles del video seleccionado -->
+                <div class="p-4">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                        <span id="currentCategory" class="badge bg-primary-subtle text-primary fw-medium px-3 py-1 rounded-pill">
+                            Categoría
+                        </span>
+                        
+                        <div class="d-flex align-items-center gap-2">
+                            <span id="currentCounter" class="text-muted small fw-medium">Video 1 de 16</span>
+                            <!-- Botones Anterior / Siguiente -->
+                            <button id="btnPrev" class="btn btn-sm btn-outline-secondary rounded-pill px-2" title="Video anterior">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <button id="btnNext" class="btn btn-sm btn-outline-secondary rounded-pill px-2" title="Siguiente video">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
 
-                    <span class="video-badge">
-                        <i class="bi bi-camera-video me-1"></i>
-                        Capacitación
-                    </span>
-
-                    <h4 class="video-title mt-3">
-                        Introducción a la plataforma institucional
+                    <h4 id="currentTitle" class="fw-bold text-dark mt-2 mb-2">
+                        Cargando video...
                     </h4>
 
-                    <p class="video-description mb-0">
-                        Video de capacitación sobre el uso de las herramientas
-                        y servicios de nuestra institución.
+                    <p id="currentDescription" class="text-secondary small mb-3">
+                        Descripción del video...
                     </p>
 
+                    <div class="p-3 bg-light rounded-3 d-flex align-items-center justify-content-between small text-muted border">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-google text-danger fs-5"></i>
+                            <span>Alojado de forma segura en <strong>Google Drive</strong></span>
+                        </div>
+                        <a id="btnExternalLink" href="#" target="_blank" class="btn btn-sm btn-link text-decoration-none">
+                            Abrir en Drive <i class="bi bi-box-arrow-up-right ms-1"></i>
+                        </a>
+                    </div>
                 </div>
 
             </div>
-
         </div>
 
-        <!-- Información lateral -->
+        <!-- 2. Columna del Selector estilo Playlist (4 cols) -->
         <div class="col-lg-4">
-
-            <div class="card video-card h-100">
-                <div class="video-info">
-
-                    <h5 class="fw-bold mb-4">
-                        <i class="bi bi-info-circle text-primary me-2"></i>
-                        Información
-                    </h5>
-
-                    <div class="mb-3">
-                        <small class="text-secondary">Categoría</small>
-                        <div class="fw-semibold">Capacitaciones</div>
+            <div class="playlist-card">
+                
+                <!-- Encabezado de la lista -->
+                <div class="playlist-header">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h6 class="fw-bold mb-0">
+                            <i class="bi bi-list-task text-primary me-2"></i>Lista de Videos
+                        </h6>
+                        <span class="badge bg-secondary-subtle text-secondary rounded-pill" id="totalBadge">16 videos</span>
                     </div>
 
-                    <hr>
-
-                    <div class="mb-3">
-                        <small class="text-secondary">Formato</small>
-                        <div class="fw-semibold">Video MP4</div>
+                    <!-- Buscador rápido dentro de los 16 videos -->
+                    <div class="search-box mt-3">
+                        <i class="bi bi-search"></i>
+                        <input type="text" id="searchInput" class="form-control" placeholder="Buscar video...">
                     </div>
-
-                    <hr>
-
-                    <div class="mb-3">
-                        <small class="text-secondary">Plataforma</small>
-                        <div class="fw-semibold">Google Drive</div>
-                    </div>
-
-                    <div class="alert alert-light border mt-4 small">
-                        <i class="bi bi-info-circle me-1"></i>
-                        El video se reproduce directamente desde Google Drive.
-                    </div>
-
                 </div>
-            </div>
 
+                <!-- Lista con Scroll interno (así no bajas toda la página) -->
+                <div class="playlist-items" id="playlistContainer">
+                    <!-- Se genera dinámicamente con JavaScript -->
+                </div>
+
+            </div>
         </div>
 
     </div>
 
 </div>
 
+<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    /**
+     * ARRAY DE 16 VIDEOS DE GOOGLE DRIVE:
+     * Para agregar o cambiar videos, solo cambia o pega el 'id' de Google Drive.
+     * El 'id' es el código que está en el enlace de Drive: /file/d/ESTE_ES_EL_ID/view
+     */
+    const videoData = [
+        {
+            id: "13Enszj-P1xc9WnZH2zbhoYlLjFnWRHLj",
+            title: "1. Introducción a la plataforma institucional",
+            category: "Capacitación",
+            duration: "10:24",
+            description: "Video de inducción general donde se explican los módulos básicos y herramientas de acceso institucional."
+        },
+        {
+            id: "190TD9856u3wMTdc-qpHV9s3LqbbfE6jl", // Reemplaza por tu ID de Drive real
+            title: "2. Gestión de usuarios y permisos de acceso",
+            category: "Seguridad",
+            duration: "08:15",
+            description: "Aprende a configurar nuevos roles, permisos administrativos y contraseñas seguras en el sistema."
+        },
+        {
+            id: "190TD9856u3wMTdc-qpHV9s3LqbbfE6jl",
+            title: "3. Creación y edición de reportes ejecutivos",
+            category: "Reportes",
+            duration: "12:40",
+            description: "Cómo exportar datos, generar filtros avanzados y descargar métricas en formato PDF o Excel."
+        },
+        {
+            id: "190TD9856u3wMTdc-qpHV9s3LqbbfE6jl",
+            title: "4. Configuración del perfil institucional",
+            category: "Ajustes",
+            duration: "05:50",
+            description: "Personalización de datos personales, notificaciones por correo y preferencias del panel."
+        },
+        {
+            id: "190TD9856u3wMTdc-qpHV9s3LqbbfE6jl",
+            title: "5. Navegación por el panel de control",
+            category: "Capacitación",
+            duration: "07:30",
+            description: "Recorrido paso a paso por los accesos directos y widgets del dashboard principal."
+        },
+        {
+            id: "190TD9856u3wMTdc-qpHV9s3LqbbfE6jl",
+            title: "6. Módulo de inventario y recursos",
+            category: "Gestión",
+            duration: "14:10",
+            description: "Registro de altas, bajas y transferencias de bienes materiales dentro de la entidad."
+        },
+        {
+            id: "190TD9856u3wMTdc-qpHV9s3LqbbfE6jl",
+            title: "7. Trámites y solicitudes digitales",
+            category: "Procesos",
+            duration: "09:45",
+            description: "Guía completa para radicar solicitudes y hacer seguimiento a tickets de soporte."
+        },
+        {
+            id: "190TD9856u3wMTdc-qpHV9s3LqbbfE6jl",
+            title: "8. Protocolos de seguridad informática",
+            category: "Seguridad",
+            duration: "11:05",
+            description: "Buenas prácticas para prevenir phishing, manejo de tokens y autenticación en dos pasos."
+        },
+        {
+            id: "190TD9856u3wMTdc-qpHV9s3LqbbfE6jl",
+            title: "9. Facturación y tesorería básica",
+            category: "Finanzas",
+            duration: "15:20",
+            description: "Procedimiento para radicar facturas y comprobantes en el sistema de pagos."
+        },
+        {
+            id: "190TD9856u3wMTdc-qpHV9s3LqbbfE6jl",
+            title: "10. Auditoría y trazabilidad de acciones",
+            category: "Auditoría",
+            duration: "06:40",
+            description: "Revisión de logs históricos para rastrear cambios realizados por otros usuarios."
+        },
+        {
+            id: "190TD9856u3wMTdc-qpHV9s3LqbbfE6jl",
+            title: "11. Carga masiva de información",
+            category: "Datos",
+            duration: "13:15",
+            description: "Uso de plantillas CSV para subir listas de contactos y registros sin errores."
+        },
+        {
+            id: "190TD9856u3wMTdc-qpHV9s3LqbbfE6jl",
+            title: "12. Mensajería interna y notificaciones",
+            category: "Comunicación",
+            duration: "04:50",
+            description: "Uso del chat interno, alertas push y anuncios generales para el equipo."
+        },
+        {
+            id: "190TD9856u3wMTdc-qpHV9s3LqbbfE6jl",
+            title: "13. Integración con Google Workspace",
+            category: "Integraciones",
+            duration: "08:35",
+            description: "Conexión de carpetas de Drive, hojas de cálculo compartidas y Google Calendar."
+        },
+        {
+            id: "190TD9856u3wMTdc-qpHV9s3LqbbfE6jl",
+            title: "14. Respaldo y recuperación de datos",
+            category: "Seguridad",
+            duration: "10:00",
+            description: "Cómo solicitar y restaurar copias de seguridad ante cualquier eventualidad."
+        },
+        {
+            id: "190TD9856u3wMTdc-qpHV9s3LqbbfE6jl",
+            title: "15. Atención al cliente y mesa de ayuda",
+            category: "Soporte",
+            duration: "11:50",
+            description: "Protocolos de respuesta rápida y asignación de prioridad a casos urgentes."
+        },
+        {
+            id: "190TD9856u3wMTdc-qpHV9s3LqbbfE6jl",
+            title: "16. Cierre del curso y evaluación final",
+            category: "Capacitación",
+            duration: "06:10",
+            description: "Resumen de lo aprendido y pasos para obtener la certificación institucional."
+        }
+    ];
+
+    let currentIndex = 0;
+
+    // Elementos del DOM
+    const mainPlayer = document.getElementById("mainPlayer");
+    const currentTitle = document.getElementById("currentTitle");
+    const currentCategory = document.getElementById("currentCategory");
+    const currentDescription = document.getElementById("currentDescription");
+    const currentCounter = document.getElementById("currentCounter");
+    const btnExternalLink = document.getElementById("btnExternalLink");
+    const playlistContainer = document.getElementById("playlistContainer");
+    const searchInput = document.getElementById("searchInput");
+    const btnPrev = document.getElementById("btnPrev");
+    const btnNext = document.getElementById("btnNext");
+    const totalBadge = document.getElementById("totalBadge");
+
+    /**
+     * Renderiza la lista lateral (Selector estilo YouTube).
+     * Nota de rendimiento: NO inserta iframes aquí, solo tarjetas ligeras.
+     */
+    function renderPlaylist(filteredList = videoData) {
+        playlistContainer.innerHTML = "";
+
+        if (filteredList.length === 0) {
+            playlistContainer.innerHTML = `
+                <div class="text-center py-4 text-muted small">
+                    <i class="bi bi-search fs-3 d-block mb-1"></i>
+                    No se encontraron videos coincidentes.
+                </div>
+            `;
+            return;
+        }
+
+        filteredList.forEach((video) => {
+            const originalIndex = videoData.indexOf(video);
+            const isActive = originalIndex === currentIndex;
+
+            const item = document.createElement("div");
+            item.className = `playlist-item ${isActive ? "active" : ""}`;
+            item.setAttribute("role", "button");
+            item.onclick = () => selectVideo(originalIndex);
+
+            // Thumbnail de Google Drive (o fallback elegante)
+            const driveThumbnailUrl = `https://drive.google.com/thumbnail?id=${video.id}&sz=w320`;
+
+            item.innerHTML = `
+                <div class="item-thumb">
+                    <img src="${driveThumbnailUrl}" alt="Miniatura" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <i class="bi bi-play-circle-fill text-white fs-4" style="display:none;"></i>
+                    <span class="badge-duration">${video.duration}</span>
+                    <div class="play-overlay">
+                        <i class="bi bi-play-fill text-white fs-4"></i>
+                    </div>
+                </div>
+
+                <div class="item-info">
+                    <div class="item-title">${video.title}</div>
+                    <div class="item-meta d-flex align-items-center gap-2">
+                        <span>${video.category}</span>
+                        ${isActive ? '<span class="badge-now-playing"><i class="bi bi-soundwave"></i> Reproduciendo</span>' : ''}
+                    </div>
+                </div>
+            `;
+
+            playlistContainer.appendChild(item);
+        });
+    }
+
+    /**
+     * Cambia el video activo.
+     * OPTIMIZACIÓN DE MEMORIA:
+     * Al cambiar solo el 'src' del único iframe existente, el navegador descarga
+     * de la memoria RAM el video anterior y solo procesa el nuevo.
+     */
+    function selectVideo(index) {
+        if (index < 0 || index >= videoData.length) return;
+
+        currentIndex = index;
+        const video = videoData[currentIndex];
+
+        // 1. Reemplazamos la fuente del iframe único (limpia la RAM del video previo)
+        const embedUrl = `https://drive.google.com/file/d/${video.id}/preview`;
+        
+        // Evitamos recargar si es el mismo src exacto
+        if (mainPlayer.src !== embedUrl) {
+            mainPlayer.src = embedUrl;
+        }
+
+        // 2. Actualizamos textos e información
+        currentTitle.textContent = video.title;
+        currentCategory.textContent = video.category;
+        currentDescription.textContent = video.description;
+        currentCounter.textContent = `Video ${currentIndex + 1} de ${videoData.length}`;
+        btnExternalLink.href = `https://drive.google.com/file/d/${video.id}/view`;
+
+        // 3. Estado de los botones Anterior / Siguiente
+        btnPrev.disabled = (currentIndex === 0);
+        btnNext.disabled = (currentIndex === videoData.length - 1);
+
+        // 4. Re-renderizamos para actualizar el resaltado azul
+        renderPlaylist(getFilteredVideos());
+
+        // 5. Auto-scroll suave del selector hacia el video activo
+        const activeElem = playlistContainer.querySelector(".playlist-item.active");
+        if (activeElem) {
+            activeElem.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+    }
+
+    // Filtrar videos con el buscador
+    function getFilteredVideos() {
+        const query = searchInput.value.toLowerCase().trim();
+        if (!query) return videoData;
+        return videoData.filter(v => 
+            v.title.toLowerCase().includes(query) || 
+            v.category.toLowerCase().includes(query)
+        );
+    }
+
+    // Eventos de botones
+    btnPrev.addEventListener("click", () => selectVideo(currentIndex - 1));
+    btnNext.addEventListener("click", () => selectVideo(currentIndex + 1));
+
+    searchInput.addEventListener("input", () => {
+        renderPlaylist(getFilteredVideos());
+    });
+
+    // Inicializar
+    totalBadge.textContent = `${videoData.length} videos`;
+    selectVideo(0);
+
+</script>
 
 </body>
 </html>
